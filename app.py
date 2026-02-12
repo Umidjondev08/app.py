@@ -53,3 +53,26 @@ def create_token(data: dict):
     to_encode.update({"exp": expire})
     encode_jwt = jwt.encode(to_encode, SECRET_CEY, algorithm=ALGORITM)
     return encode_jwt
+@app.post("/register")
+def register(user:UserRegister):
+    if user.email in user_db:
+        raise HTTPException(status_code=404,detail="Bu email allaqachon ro'yxatdan o'tgan")
+    hashed = get_hashhed_pass(user.password)
+    user_db[user.email] = {
+        "username":user.username,
+        "email":user.email,
+        "password":hashed
+
+    }
+    return{"xabar":"Muvaffaqiyatli ro'yxatdan  o'tingiz"}
+@app.post("/login")
+def login(user_Data:UserLogin):
+    user = user_db.get(user_Data.email)
+    if not user or not verify_password(user_Data.password,user["pasword"]):
+        raise HTTPException(status_code=404,datail="Email yoki Parol noto'g'ri")
+    access_token = create_token(data={"sub",user["email"]})
+    return{
+        "token":access_token,
+        "token_type":"bearer",
+        "xabar":f"Xush kelibsiz {user["email"]}"
+    }
